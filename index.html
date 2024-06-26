@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ニコニ・コモンズ(Re:仮) 非公式検索サイト</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0/papaparse.min.js"></script>
+    <style>
+        .table-responsive {
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .table {
+            width: 100%;
+            table-layout: fixed;
+        }
+        .table th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+            z-index: 1;
+            white-space: normal;
+            word-wrap: break-word;
+            font-size: 0.9rem;
+        }
+        .table td {
+            white-space: normal;
+            word-wrap: break-word;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            font-size: 0.9rem;
+        }
+        .expandable-cell {
+            position: relative;
+        }
+        .full-text {
+            display: none;
+        }
+        .expanded .short-text {
+            display: none;
+        }
+        .expanded .full-text {
+            display: inline;
+        }
+        @media (min-width: 1920px) and (max-width: 3839px) {
+            .container {
+                max-width: 1920px;
+            }
+        }
+        @media (min-width: 3840px) {
+            .container {
+                max-width: 3840px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg bg-body-tertiary;" style="background-color: #252525;" data-bs-theme="dark">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">ニコニ・コモンズ(Re:仮) 非公式検索サイト</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="https://static.commons.nicovideo.jp/">本家</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+
+    <div class="container mt-5">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="file1-tab" data-bs-toggle="tab" data-bs-target="#file1" type="button" role="tab" aria-controls="file1" aria-selected="true">外部サイトで素材配布しているライセンス</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="file2-tab" data-bs-toggle="tab" data-bs-target="#file2" type="button" role="tab" aria-controls="file2" aria-selected="false">二次創作（子作品）があるニコニコ動画・ニコニコ静画などの説明文</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="file3-tab" data-bs-toggle="tab" data-bs-target="#file3" type="button" role="tab" aria-controls="file3" aria-selected="false">ニコニ・コモンズで素材配布しているライセンス</button>
+            </li>
+        </ul>
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="file1" role="tabpanel" aria-labelledby="file1-tab">
+                <h2 class="mt-4">外部サイトで素材配布しているライセンス</h2>
+                <input type="text" id="searchInput1" class="form-control mb-3" placeholder="検索...">
+                <div id="lastUpdated1"></div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="csvTable1"></table>
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="pagination1"></ul>
+                </nav>
+            </div>
+            <div class="tab-pane fade" id="file2" role="tabpanel" aria-labelledby="file2-tab">
+                <h2 class="mt-4">二次創作（子作品）があるニコニコ動画・ニコニコ静画などの説明文</h2>
+                <input type="text" id="searchInput2" class="form-control mb-3" placeholder="検索...">
+                <div id="lastUpdated2"></div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="csvTable2"></table>
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="pagination2"></ul>
+                </nav>
+            </div>
+            <div class="tab-pane fade" id="file3" role="tabpanel" aria-labelledby="file3-tab">
+                <h2 class="mt-4">ニコニ・コモンズで素材配布しているライセンス</h2>
+                <input type="text" id="searchInput3" class="form-control mb-3" placeholder="検索...">
+                <div id="lastUpdated3"></div>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="csvTable3"></table>
+                </div>
+                <nav aria-label="Page navigation">
+                    <ul class="pagination" id="pagination3"></ul>
+                </nav>
+            </div>
+        </div>
+        <div>
+            <p>※当csvデータはWebサイトを置いているサーバーにキャッシュしています。</p>
+            <p>当サイトの<a href="https://github.com/mamireimu/niconi-commons-rekari_unofficial_search_by_mamireimu">リポジトリ</p>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script>
+        const ROWS_PER_PAGE = 100;
+        let csvData = [null, null, null];
+        let currentPage = 1;
+        let filteredData = [null, null, null];
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function decodeShiftJIS(arrayBuffer) {
+            const decoder = new TextDecoder('shift-jis');
+            return decoder.decode(arrayBuffer);
+        }
+
+        function loadCSV(fileNumber) {
+            return new Promise((resolve, reject) => {
+                console.log(`Starting to load CSV ${fileNumber}`);
+                if (csvData[fileNumber - 1] !== null) {
+                    console.log(`CSV ${fileNumber} already loaded, rendering`);
+                    renderFilteredTable(fileNumber, 1);
+                    setupPagination(fileNumber);
+                    setupSearch(fileNumber);
+                    resolve();
+                    return;
+                }
+
+                const filePath = `/data/commons${fileNumber}.csv`;
+                console.log(`Fetching ${filePath}`);
+                fetch(filePath)
+                    .then(response => {
+                        console.log(`Received response for ${filePath}`);
+                        return response.arrayBuffer();
+                    })
+                    .then(arrayBuffer => {
+                        console.log(`Decoding arrayBuffer for ${filePath}`);
+                        const text = decodeShiftJIS(arrayBuffer);
+                        console.log(`Parsing CSV for ${filePath}`);
+                        Papa.parse(text, {
+                            complete: function(results) {
+                                console.log(`CSV parsing complete for ${filePath}`);
+                                csvData[fileNumber - 1] = results.data;
+                                renderFilteredTable(fileNumber, 1);
+                                setupPagination(fileNumber);
+                                setupSearch(fileNumber);
+                                resolve();
+                            },
+                            error: function(error) {
+                                console.error(`Error parsing CSV for ${filePath}:`, error);
+                                reject(error);
+                            }
+                        });
+
+                        fetch(filePath, { method: 'HEAD' })
+                            .then(response => {
+                                const lastModified = response.headers.get('Last-Modified');
+                                const lastUpdated = document.getElementById(`lastUpdated${fileNumber}`);
+                                if (lastUpdated) {
+                                    lastUpdated.textContent = `キャッシュデータの最終更新日時: ${new Date(lastModified).toLocaleString()}`;
+                                }
+                            });
+                    })
+                    .catch(error => {
+                        console.error(`Error loading CSV for ${filePath}:`, error);
+                        console.error('Error stack:', error.stack);
+                        reject(error);
+                    });
+            });
+        }
+
+        function setupShowMoreButtons(container) {
+            container.querySelectorAll('.show-more').forEach(button => {
+                button.addEventListener('click', function() {
+                    const cell = this.closest('td');
+                    const fullText = cell.querySelector('.full-text');
+                    const shortText = cell.querySelector('.short-text');
+                    if (fullText.style.display === 'none') {
+                        fullText.style.display = 'inline';
+                        shortText.style.display = 'none';
+                        this.textContent = '閉じる';
+                    } else {
+                        fullText.style.display = 'none';
+                        shortText.style.display = 'inline';
+                        this.textContent = 'もっと見る';
+                    }
+                });
+            });
+        }
+
+        function setupPagination(fileNumber) {
+            const paginationElement = document.getElementById(`pagination${fileNumber}`);
+            if (!paginationElement) {
+                console.error(`Pagination element for file ${fileNumber} not found.`);
+                return;
+            }
+        
+            const data = filteredData[fileNumber - 1] || csvData[fileNumber - 1];
+            const pageCount = Math.ceil(data.length / ROWS_PER_PAGE);
+        
+            paginationElement.innerHTML = '';
+            
+            // 「前へ」ボタン
+            const prevLi = createPageItem('前へ', () => {
+                if (currentPage > 1) {
+                    renderFilteredTable(fileNumber, currentPage - 1);
+                    setupPagination(fileNumber);
+                }
+            }, currentPage === 1);
+            paginationElement.appendChild(prevLi);
+        
+            // ページ番号の表示
+            const maxVisiblePages = 5; // 表示するページ番号の最大数
+            let startPage, endPage;
+        
+            if (pageCount <= maxVisiblePages) {
+                // ページ数が少ない場合は全て表示
+                startPage = 1;
+                endPage = pageCount;
+            } else if (currentPage <= Math.floor(maxVisiblePages / 2) + 1) {
+                // 現在のページが前半にある場合
+                startPage = 1;
+                endPage = maxVisiblePages;
+            } else if (currentPage >= pageCount - Math.floor(maxVisiblePages / 2)) {
+                // 現在のページが後半にある場合
+                startPage = pageCount - maxVisiblePages + 1;
+                endPage = pageCount;
+            } else {
+                // それ以外の場合
+                startPage = currentPage - Math.floor(maxVisiblePages / 2);
+                endPage = startPage + maxVisiblePages - 1;
+            }
+        
+            if (startPage > 1) {
+                paginationElement.appendChild(createPageItem('1', () => {
+                    renderFilteredTable(fileNumber, 1);
+                    setupPagination(fileNumber);
+                }));
+                if (startPage > 2) {
+                    paginationElement.appendChild(createPageItem('...', null, true));
+                }
+            }
+        
+            for (let i = startPage; i <= endPage; i++) {
+                const li = createPageItem(i, () => {
+                    renderFilteredTable(fileNumber, i);
+                    setupPagination(fileNumber);
+                }, false, i === currentPage);
+                paginationElement.appendChild(li);
+            }
+        
+            if (endPage < pageCount) {
+                if (endPage < pageCount - 1) {
+                    paginationElement.appendChild(createPageItem('...', null, true));
+                }
+                paginationElement.appendChild(createPageItem(pageCount, () => {
+                    renderFilteredTable(fileNumber, pageCount);
+                    setupPagination(fileNumber);
+                }));
+            }
+        
+            // 「次へ」ボタン
+            const nextLi = createPageItem('次へ', () => {
+                if (currentPage < pageCount) {
+                    renderFilteredTable(fileNumber, currentPage + 1);
+                    setupPagination(fileNumber);
+                }
+            }, currentPage === pageCount);
+            paginationElement.appendChild(nextLi);
+        }
+
+        function createPageItem(text, onClick, disabled = false, active = false) {
+            const li = document.createElement('li');
+            li.classList.add('page-item');
+            if (disabled) li.classList.add('disabled');
+            if (active) li.classList.add('active');
+
+            const a = document.createElement('a');
+            a.classList.add('page-link');
+            a.href = '#';
+            a.textContent = text;
+            if (onClick && !disabled) {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    onClick();
+                });
+            }
+
+            li.appendChild(a);
+            return li;
+        }
+
+        function setupSearch(fileNumber) {
+            const searchInput = document.getElementById(`searchInput${fileNumber}`);
+            if (!searchInput) {
+                console.error(`Search input for file ${fileNumber} not found.`);
+                return;
+            }
+
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                filteredData[fileNumber - 1] = csvData[fileNumber - 1].filter((row, index) => {
+                    if (index === 0) return true; // Always include header
+                    return row.some(cell => cell.toLowerCase().includes(searchTerm));
+                });
+                
+                renderFilteredTable(fileNumber, 1);
+                setupPagination(fileNumber);
+            });
+        }
+
+        function renderFilteredTable(fileNumber, page) {
+            currentPage = page;
+            const table = document.getElementById(`csvTable${fileNumber}`);
+            if (!table) {
+                console.error(`Table element for file ${fileNumber} not found.`);
+                return;
+            }
+
+            table.innerHTML = '';
+
+            const data = filteredData[fileNumber - 1] || csvData[fileNumber - 1];
+            if (!data) {
+                console.error(`No data available for file ${fileNumber}`);
+                return;
+            }
+
+            const startIndex = (page - 1) * ROWS_PER_PAGE;
+            const endIndex = startIndex + ROWS_PER_PAGE;
+            const paginatedData = data.slice(startIndex, endIndex);
+
+            const headerRow = table.insertRow();
+            data[0].forEach(header => {
+                const th = document.createElement('th');
+                th.textContent = header;
+                headerRow.appendChild(th);
+            });
+
+            paginatedData.slice(1).forEach(row => {
+                const tableRow = table.insertRow();
+                row.forEach((cell, index) => {
+                    const td = tableRow.insertCell();
+                    const header = data[0][index];
+                    const escapedCell = escapeHtml(cell);
+                    if (header === "説明文" || header === "独自に定める条件") {
+                        td.classList.add('expandable-cell');
+                        const shortText = escapedCell.length > 50 ? escapedCell.substring(0, 50) + '...' : escapedCell;
+                        td.innerHTML = `
+                            <span class="short-text">${shortText}</span>
+                            <span class="full-text" style="display:none;">${escapedCell}</span>
+                            ${escapedCell.length > 50 ? '<button class="btn btn-sm btn-link show-more">もっと見る</button>' : ''}
+                        `;
+                    } else if (cell.startsWith('http') || cell.startsWith('https')) {
+                        const a = document.createElement('a');
+                        a.href = cell;
+                        a.textContent = escapedCell;
+                        a.target = '_blank';
+                        td.appendChild(a);
+                    } else {
+                        td.textContent = escapedCell;
+                    }
+                });
+            });
+
+            setupShowMoreButtons(table);
+        }
+
+        window.addEventListener('load', function() {
+            loadCSV(1)
+                .then(() => {
+                    console.log('CSV 1 loaded successfully');
+                })
+                .catch(error => {
+                    console.error('Failed to load initial CSV:', error);
+                    console.error('Error stack:', error.stack);
+                })
+                .finally(() => {
+                    console.log('Initial CSV load attempt completed');
+                });
+        });
+
+        document.querySelectorAll('button[data-bs-toggle="tab"]').forEach(tabButton => {
+            tabButton.addEventListener('shown.bs.tab', function (event) {
+                const targetTabId = event.target.getAttribute('data-bs-target');
+                const fileNumber = parseInt(targetTabId.replace('#file', ''));
+                loadCSV(fileNumber)
+                    .then(() => {
+                        console.log(`CSV ${fileNumber} loaded successfully`);
+                    })
+                    .catch(error => {
+                        console.error(`Failed to load CSV for file ${fileNumber}:`, error);
+                        console.error('Error stack:', error.stack);
+                    })
+                    .finally(() => {
+                        console.log(`CSV load attempt for file ${fileNumber} completed`);
+                    });
+            });
+        });
+    </script>
+</body>
+</html>
